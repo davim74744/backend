@@ -1,7 +1,6 @@
 // app/Controllers/Http/PaymentController.ts
 import axios from 'axios'
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app'
 
 export default class PaymentController {
   async processCreditPayment(ctx: HttpContext) {
