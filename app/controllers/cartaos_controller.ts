@@ -46,7 +46,7 @@ export default class CartaosController {
       console.error(error)
       return response.status(500).json({
         success: false,
-        error: 'Erro interno ao processar o pagamento',
+        error: 'Erro interno ao processar o pagamento' + error,
       })
     }
   }
@@ -77,7 +77,7 @@ export default class CartaosController {
       })
     } catch (error) {
       console.error(error)
-      return response.status(500).json({ error: 'Erro interno' })
+      return response.status(500).json({ error: 'Erro interno' + error })
     }
   }
 }
