@@ -1,5 +1,5 @@
 import { HttpContext } from '@adonisjs/core/http'
-import { env } from '@adonisjs/core/env'
+import env from '#start/env'
 
 export default class PixController {
   public async generatePixPayment({ request, response }: HttpContext) {
@@ -20,7 +20,9 @@ export default class PixController {
         return response.badRequest({ success: false, message: 'Invalid phone number.' })
       }
 
-     const secretKey = env.get('TITANSHUB_SECRET_KEY')
+    const secretKey = env.get('TITANSHUB_SECRET_KEY')  // Agora tipado e funciona!
+
+
       if (!secretKey) {
         throw new Error('Variável de ambiente TITANSHUB_SECRET_KEY ausente.')
       }
