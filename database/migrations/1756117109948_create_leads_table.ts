@@ -9,7 +9,7 @@ export default class extends BaseSchema {
 
       // Colunas para os dados do formulário
       table.string('name').notNullable()
-      table.string('cpf', 11).notNullable()
+      table.string('cpf', 11).notNullable().unique() // CPF deve ser único
       table.string('email').notNullable()
       table.string('phone', 11).notNullable()
       table.string('operator').notNullable()

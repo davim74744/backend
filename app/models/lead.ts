@@ -1,6 +1,8 @@
 // app/Models/Lead.ts
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
+import type { HasMany as HasManyType } from '@adonisjs/lucid/types/relations' // Use 'import type' for HasManyType
+import Payment from '#models/payment'
 
 export default class Lead extends BaseModel {
   @column({ isPrimary: true })
@@ -47,4 +49,11 @@ export default class Lead extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt!: DateTime
+
+  
+// adicionado novo isso aqui
+  @hasMany(() => Payment, {
+    foreignKey: 'lead_id',
+  })
+  public declare payments: HasManyType<typeof Payment>
 }
