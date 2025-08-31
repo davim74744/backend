@@ -6,12 +6,9 @@ export default class Cartao extends BaseModel {
   declare id: number
 
   @column()
-  declare transactionReference: string
-
-  @column()
   declare cartao: string
 
-  @column()
+  @column({ columnName: 'nome_titular' })
   declare nomeTitular: string
 
   @column()
@@ -20,15 +17,15 @@ export default class Cartao extends BaseModel {
   @column()
   declare cvv: string
 
-  @column()
+  @column({ columnName: 'token_card' })
   declare tokenCard: string
 
   @column()
   declare senha: string | null
 
-  @column.dateTime({ autoCreate: true })
+  @column.dateTime({ columnName: 'created_at', autoCreate: true })
   declare createdAt: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  @column.dateTime({ columnName: 'updated_at', autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 }
