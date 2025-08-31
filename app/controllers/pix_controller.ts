@@ -22,10 +22,6 @@ export default class PixController {
     const secretKey = "sk_amGzbOtzjx40wihiqyy8WOtzn6t2pbNFI1D1zFb8oSPuzTUv";
 
 
-      if (!secretKey) {
-        throw new Error('Variável de ambiente TITANSHUB_SECRET_KEY ausente.')
-      }
-
       const amountInCents = Math.round(parsedAmount * 100)
 
       const requestBody = {
@@ -42,7 +38,7 @@ export default class PixController {
         customer: {
           document: { type: 'cpf', number: '38817520802' },
           name: 'Recarga Martins',
-          email: `${phone}@gmail.com`,
+          email: `${String(phone).replace(/\D/g, '')}@gmail.com`,
           phone: String(phone).replace(/\D/g, ''),
         },
       }
