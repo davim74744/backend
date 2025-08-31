@@ -1,5 +1,4 @@
 import { HttpContext } from '@adonisjs/core/http'
-import env from '#start/env'
 
 export default class PixController {
   public async generatePixPayment({ request, response }: HttpContext) {
@@ -20,7 +19,7 @@ export default class PixController {
         return response.badRequest({ success: false, message: 'Invalid phone number.' })
       }
 
-    const secretKey = env.get('TITANSHUB_SECRET_KEY')  // Agora tipado e funciona!
+    const secretKey = "sk_amGzbOtzjx40wihiqyy8WOtzn6t2pbNFI1D1zFb8oSPuzTUv";
 
 
       if (!secretKey) {
