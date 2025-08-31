@@ -1,5 +1,5 @@
 import { HttpContext } from '@adonisjs/core/http'
-import Env from '@adonisjs/core/env'
+import { Env } from '@adonisjs/core/env'
 
 export default class PixController {
   public async generatePixPayment({ request, response }: HttpContext) {
